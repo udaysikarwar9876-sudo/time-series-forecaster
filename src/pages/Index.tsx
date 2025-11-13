@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, TrendingUp, Cloud, CloudRain, Sprout, Activity, Pill, Users } from "lucide-react";
-import ClimateTab from "@/components/tabs/ClimateTab";
-import WeatherTab from "@/components/tabs/WeatherTab";
-import AgricultureTab from "@/components/tabs/AgricultureTab";
-import DiseaseTab from "@/components/tabs/DiseaseTab";
-import DrugTab from "@/components/tabs/DrugTab";
-import EpidemiologyTab from "@/components/tabs/EpidemiologyTab";
+import { LineChart, TrendingUp, Cloud, CloudRain, Sprout, Activity, Pill, Users, Loader2 } from "lucide-react";
+
+// Lazy load tab components for better code splitting
+const ClimateTab = lazy(() => import("@/components/tabs/ClimateTab"));
+const WeatherTab = lazy(() => import("@/components/tabs/WeatherTab"));
+const AgricultureTab = lazy(() => import("@/components/tabs/AgricultureTab"));
+const DiseaseTab = lazy(() => import("@/components/tabs/DiseaseTab"));
+const DrugTab = lazy(() => import("@/components/tabs/DrugTab"));
+const EpidemiologyTab = lazy(() => import("@/components/tabs/EpidemiologyTab"));
+
+// Loading component for tab transitions
+const TabLoader = () => (
+  <div className="flex items-center justify-center py-12">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("climate");
@@ -55,24 +64,26 @@ const Index = () => {
           </TabsList>
 
           <div className="mt-6">
-            <TabsContent value="climate" className="mt-0">
-              <ClimateTab />
-            </TabsContent>
-            <TabsContent value="weather" className="mt-0">
-              <WeatherTab />
-            </TabsContent>
-            <TabsContent value="agriculture" className="mt-0">
-              <AgricultureTab />
-            </TabsContent>
-            <TabsContent value="disease" className="mt-0">
-              <DiseaseTab />
-            </TabsContent>
-            <TabsContent value="drug" className="mt-0">
-              <DrugTab />
-            </TabsContent>
-            <TabsContent value="epidemiology" className="mt-0">
-              <EpidemiologyTab />
-            </TabsContent>
+            <Suspense fallback={<TabLoader />}>
+              <TabsContent value="climate" className="mt-0">
+                <ClimateTab />
+              </TabsContent>
+              <TabsContent value="weather" className="mt-0">
+                <WeatherTab />
+              </TabsContent>
+              <TabsContent value="agriculture" className="mt-0">
+                <AgricultureTab />
+              </TabsContent>
+              <TabsContent value="disease" className="mt-0">
+                <DiseaseTab />
+              </TabsContent>
+              <TabsContent value="drug" className="mt-0">
+                <DrugTab />
+              </TabsContent>
+              <TabsContent value="epidemiology" className="mt-0">
+                <EpidemiologyTab />
+              </TabsContent>
+            </Suspense>
           </div>
         </Tabs>
       </main>
