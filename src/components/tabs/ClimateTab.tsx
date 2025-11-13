@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Plus, Trash2, Calculator } from "lucide-react";
+import { polynomialRegression } from "@/lib/regression";
 
 interface DataPoint {
   year: number;
@@ -41,35 +42,21 @@ const ClimateTab = () => {
   const calculateRegression = () => {
     if (data.length < 3) return;
 
-    const n = data.length;
     const baseYear = data[0].year;
     
     // Transform years to offset from base year
     const x = data.map(d => d.year - baseYear);
     const y = data.map(d => d.temperature);
     
-    // Calculate sums for polynomial regression
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumX2 = x.reduce((a, b) => a + b * b, 0);
-    const sumX3 = x.reduce((a, b) => a + b * b * b, 0);
-    const sumX4 = x.reduce((a, b) => a + b * b * b * b, 0);
-    const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
-    const sumX2Y = x.reduce((a, b, i) => a + b * b * y[i], 0);
-
-    // Solve for coefficients using normal equations
-    // This is a simplified calculation
-    const c = ((n * sumX2Y - sumX2 * sumY) - (sumX * sumXY - sumX2 * sumY) * (n * sumX2 - sumX * sumX) / (n * sumX - sumX * sumX)) / 
-              ((n * sumX4 - sumX2 * sumX2) - (n * sumX3 - sumX * sumX2) * (n * sumX2 - sumX * sumX) / (n * sumX - sumX * sumX));
+    // Use least squares polynomial regression (degree 2)
+    const coef = polynomialRegression(x, y, 2);
     
-    const b = (sumXY - c * sumX3 - (sumY - c * sumX2) * sumX / n) / (sumX2 - sumX * sumX / n);
-    const a = (sumY - b * sumX - c * sumX2) / n;
-
-    setCoefficients({ a, b, c });
+    // coef[0] is intercept, coef[1] is linear term, coef[2] is quadratic term
+    setCoefficients({ a: coef[0], b: coef[1], c: coef[2] });
 
     // Calculate prediction
     const t = predictionYear - baseYear;
-    const predictedTemp = a + b * t + c * t * t;
+    const predictedTemp = coef[0] + coef[1] * t + coef[2] * t * t;
     setPrediction(predictedTemp);
   };
 
@@ -150,11 +137,11 @@ const ClimateTab = () => {
 
           {prediction && (
             <div className="p-4 bg-accent/10 rounded-lg space-y-2">
-              <p className="text-sm font-medium">Coefficients:</p>
+              <p className="text-sm font-medium">Least Squares Coefficients:</p>
               <div className="text-xs space-y-1 text-muted-foreground">
-                <p>a = {coefficients.a.toFixed(4)}</p>
-                <p>b = {coefficients.b.toFixed(6)}</p>
-                <p>c = {coefficients.c.toFixed(8)}</p>
+                <p>a (intercept) = {coefficients.a.toFixed(4)}</p>
+                <p>b (linear) = {coefficients.b.toFixed(6)}</p>
+                <p>c (quadratic) = {coefficients.c.toFixed(8)}</p>
               </div>
               <p className="text-lg font-bold text-primary mt-3">
                 Predicted Temperature ({predictionYear}): {prediction.toFixed(2)}°C

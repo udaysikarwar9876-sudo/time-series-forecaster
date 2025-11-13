@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ZAxis } from "recharts";
 import { Calculator, Plus, Trash2 } from "lucide-react";
+import { multipleLinearRegression } from "@/lib/regression";
 
 interface DataPoint {
   rainfall: number;
@@ -41,27 +42,18 @@ const AgricultureTab = () => {
   const calculateRegression = () => {
     if (data.length < 2) return;
 
-    const n = data.length;
-    const sumR = data.reduce((sum, d) => sum + d.rainfall, 0);
-    const sumF = data.reduce((sum, d) => sum + d.fertilizer, 0);
-    const sumY = data.reduce((sum, d) => sum + d.yield, 0);
-    const sumRY = data.reduce((sum, d) => sum + d.rainfall * d.yield, 0);
-    const sumFY = data.reduce((sum, d) => sum + d.fertilizer * d.yield, 0);
-    const sumR2 = data.reduce((sum, d) => sum + d.rainfall * d.rainfall, 0);
-    const sumF2 = data.reduce((sum, d) => sum + d.fertilizer * d.fertilizer, 0);
-    const sumRF = data.reduce((sum, d) => sum + d.rainfall * d.fertilizer, 0);
+    // Prepare data for multiple linear regression: Y = a + b*R + c*F
+    const X = data.map(d => [d.rainfall, d.fertilizer]);
+    const y = data.map(d => d.yield);
 
-    // Solve using normal equations for Y = a + b*R + c*F
-    const denominator = n * (sumR2 * sumF2 - sumRF * sumRF) - sumR * (sumR * sumF2 - sumF * sumRF) + sumF * (sumR * sumRF - sumF * sumR2);
+    // Use least squares method
+    const coef = multipleLinearRegression(X, y);
     
-    const b = (n * (sumRY * sumF2 - sumFY * sumRF) - sumY * (sumR * sumF2 - sumF * sumRF) + sumF * (sumR * sumFY - sumF * sumRY)) / denominator;
-    const c = (n * (sumR2 * sumFY - sumRY * sumRF) - sumR * (sumR * sumFY - sumY * sumRF) + sumY * (sumR * sumRF - sumF * sumR2)) / denominator;
-    const a = (sumY - b * sumR - c * sumF) / n;
-
-    setCoefficients({ a, b, c });
+    // coef[0] is intercept, coef[1] is rainfall coefficient, coef[2] is fertilizer coefficient
+    setCoefficients({ a: coef[0], b: coef[1], c: coef[2] });
 
     // Calculate prediction
-    const predictedYield = a + b * rainfall + c * fertilizer;
+    const predictedYield = coef[0] + coef[1] * rainfall + coef[2] * fertilizer;
     setPrediction(predictedYield);
   };
 
@@ -156,11 +148,11 @@ const AgricultureTab = () => {
 
           {prediction !== null && (
             <div className="p-4 bg-accent/10 rounded-lg space-y-2">
-              <p className="text-sm font-medium">Coefficients:</p>
+              <p className="text-sm font-medium">Least Squares Coefficients:</p>
               <div className="text-xs space-y-1 text-muted-foreground">
-                <p>a = {coefficients.a.toFixed(4)}</p>
-                <p>b (rainfall) = {coefficients.b.toFixed(6)}</p>
-                <p>c (fertilizer) = {coefficients.c.toFixed(6)}</p>
+                <p>β₀ (intercept) = {coefficients.a.toFixed(4)}</p>
+                <p>β₁ (rainfall) = {coefficients.b.toFixed(6)}</p>
+                <p>β₂ (fertilizer) = {coefficients.c.toFixed(6)}</p>
               </div>
               <p className="text-lg font-bold text-primary mt-3">
                 Predicted Yield: {prediction.toFixed(2)} tons/ha
