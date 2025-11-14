@@ -1,13 +1,13 @@
 import { useState, lazy, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, TrendingUp, Cloud, CloudRain, Sprout, Activity, Pill, Users, Loader2 } from "lucide-react";
+import { LineChart, TrendingUp, Cloud, CloudRain, Activity, Users, Loader2, DollarSign, TrendingUpIcon } from "lucide-react";
 
 // Lazy load tab components for better code splitting
 const ClimateTab = lazy(() => import("@/components/tabs/ClimateTab"));
 const WeatherTab = lazy(() => import("@/components/tabs/WeatherTab"));
-const AgricultureTab = lazy(() => import("@/components/tabs/AgricultureTab"));
+const ConsumerPriceIndexTab = lazy(() => import("@/components/tabs/ConsumerPriceIndexTab"));
 const DiseaseTab = lazy(() => import("@/components/tabs/DiseaseTab"));
-const DrugTab = lazy(() => import("@/components/tabs/DrugTab"));
+const NationalGDPTab = lazy(() => import("@/components/tabs/NationalGDPTab"));
 const EpidemiologyTab = lazy(() => import("@/components/tabs/EpidemiologyTab"));
 
 // Loading component for tab transitions
@@ -23,9 +23,9 @@ const Index = () => {
   const tabs = [
     { id: "climate", label: "Climate", icon: Cloud, color: "text-chart-1" },
     { id: "weather", label: "Weather", icon: CloudRain, color: "text-chart-2" },
-    { id: "agriculture", label: "Agriculture", icon: Sprout, color: "text-chart-3" },
+    { id: "cpi", label: "Consumer Price Index", icon: DollarSign, color: "text-chart-3" },
     { id: "disease", label: "Disease", icon: Activity, color: "text-chart-4" },
-    { id: "drug", label: "Drug Response", icon: Pill, color: "text-chart-5" },
+    { id: "gdp", label: "National GDP", icon: TrendingUpIcon, color: "text-chart-5" },
     { id: "epidemiology", label: "Epidemiology", icon: Users, color: "text-chart-1" },
   ];
 
@@ -38,7 +38,7 @@ const Index = () => {
               <TrendingUp className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Regression Model Visualizer</h1>
+              <h1 className="text-2xl font-bold text-foreground">Least Squares Model Visualizer</h1>
               <p className="text-sm text-muted-foreground">Interactive curve fitting and predictions</p>
             </div>
           </div>
@@ -71,14 +71,14 @@ const Index = () => {
               <TabsContent value="weather" className="mt-0">
                 <WeatherTab />
               </TabsContent>
-              <TabsContent value="agriculture" className="mt-0">
-                <AgricultureTab />
+              <TabsContent value="cpi" className="mt-0">
+                <ConsumerPriceIndexTab />
               </TabsContent>
               <TabsContent value="disease" className="mt-0">
                 <DiseaseTab />
               </TabsContent>
-              <TabsContent value="drug" className="mt-0">
-                <DrugTab />
+              <TabsContent value="gdp" className="mt-0">
+                <NationalGDPTab />
               </TabsContent>
               <TabsContent value="epidemiology" className="mt-0">
                 <EpidemiologyTab />
