@@ -55,7 +55,7 @@ const Index = () => {
               <TrendingUp className="h-8 w-8 text-primary-foreground" />
             </div>
             <div className="text-center">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-2">
+              <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text mb-2 lg:text-6xl text-slate-900">
                 FUTURELENS
               </h1>
               <p className="text-sm md:text-base text-muted-foreground font-medium tracking-wide">
