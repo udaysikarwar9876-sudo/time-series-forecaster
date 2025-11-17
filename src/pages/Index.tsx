@@ -48,15 +48,19 @@ const Index = () => {
     color: "text-chart-1"
   }];
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container px-4 py-6 rounded-3xl mx-[750px]">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-primary to-accent bg-neutral-950 rounded-2xl">
-              <TrendingUp className="h-6 w-6 text-primary-foreground mx-0" />
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg">
+              <TrendingUp className="h-8 w-8 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-center font-extrabold font-sans text-gray-700 mx-0 text-6xl">​FUTURELENS</h1>
-              <p className="text-sm text-muted-foreground mx-0">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        PREDICTING FUTURE TRENDS  </p>
+            <div className="text-center">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-2">
+                FUTURELENS
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground font-medium tracking-wide">
+                PREDICTING FUTURE TRENDS
+              </p>
             </div>
           </div>
         </div>
