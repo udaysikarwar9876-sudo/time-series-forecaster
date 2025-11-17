@@ -11,35 +11,52 @@ const NationalGDPTab = lazy(() => import("@/components/tabs/NationalGDPTab"));
 const EpidemiologyTab = lazy(() => import("@/components/tabs/EpidemiologyTab"));
 
 // Loading component for tab transitions
-const TabLoader = () => (
-  <div className="flex items-center justify-center py-12">
+const TabLoader = () => <div className="flex items-center justify-center py-12">
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  </div>
-);
-
+  </div>;
 const Index = () => {
   const [activeTab, setActiveTab] = useState("climate");
-
-  const tabs = [
-    { id: "climate", label: "Climate", icon: Cloud, color: "text-chart-1" },
-    { id: "weather", label: "Weather", icon: CloudRain, color: "text-chart-2" },
-    { id: "cpi", label: "Consumer Price Index", icon: DollarSign, color: "text-chart-3" },
-    { id: "disease", label: "Disease", icon: Activity, color: "text-chart-4" },
-    { id: "gdp", label: "National GDP", icon: TrendingUpIcon, color: "text-chart-5" },
-    { id: "epidemiology", label: "Epidemiology", icon: Users, color: "text-chart-1" },
-  ];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+  const tabs = [{
+    id: "climate",
+    label: "Climate",
+    icon: Cloud,
+    color: "text-chart-1"
+  }, {
+    id: "weather",
+    label: "Weather",
+    icon: CloudRain,
+    color: "text-chart-2"
+  }, {
+    id: "cpi",
+    label: "Consumer Price Index",
+    icon: DollarSign,
+    color: "text-chart-3"
+  }, {
+    id: "disease",
+    label: "Disease",
+    icon: Activity,
+    color: "text-chart-4"
+  }, {
+    id: "gdp",
+    label: "National GDP",
+    icon: TrendingUpIcon,
+    color: "text-chart-5"
+  }, {
+    id: "epidemiology",
+    label: "Epidemiology",
+    icon: Users,
+    color: "text-chart-1"
+  }];
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container px-4 py-6 rounded-3xl mx-[750px]">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-lg">
-              <TrendingUp className="h-6 w-6 text-primary-foreground" />
+            <div className="p-2 bg-gradient-to-br from-primary to-accent bg-neutral-950 rounded-2xl">
+              <TrendingUp className="h-6 w-6 text-primary-foreground mx-0" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Least Squares Model Visualizer</h1>
-              <p className="text-sm text-muted-foreground">Interactive curve fitting and predictions</p>
+              <h1 className="text-center font-extrabold font-sans text-gray-700 mx-0 text-6xl">​FUTURELENS</h1>
+              <p className="text-sm text-muted-foreground mx-0">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        PREDICTING FUTURE TRENDS  </p>
             </div>
           </div>
         </div>
@@ -48,19 +65,13 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 bg-card/50 p-2 h-auto">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
-                >
+            {tabs.map(tab => {
+            const Icon = tab.icon;
+            return <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                   <Icon className={`h-4 w-4 ${activeTab === tab.id ? '' : tab.color}`} />
                   <span className="hidden sm:inline">{tab.label}</span>
-                </TabsTrigger>
-              );
-            })}
+                </TabsTrigger>;
+          })}
           </TabsList>
 
           <div className="mt-6">
@@ -87,8 +98,6 @@ const Index = () => {
           </div>
         </Tabs>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
