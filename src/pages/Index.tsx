@@ -2,7 +2,7 @@ import { useState, lazy, Suspense, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LineChart, TrendingUp, Cloud, CloudRain, Activity, Users, Loader2, DollarSign, TrendingUpIcon, LogOut } from "lucide-react";
+import { LineChart, TrendingUp, Cloud, CloudRain, Activity, Users, Loader2, DollarSign, TrendingUpIcon, LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 // Lazy load tab components for better code splitting
@@ -76,15 +76,26 @@ const Index = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1" />
             <div className="flex-1" />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={signOut}
-              className="gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/dashboard")}
+                className="gap-2"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={signOut}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="p-3 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg">
