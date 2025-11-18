@@ -1,6 +1,9 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, TrendingUp, Cloud, CloudRain, Activity, Users, Loader2, DollarSign, TrendingUpIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LineChart, TrendingUp, Cloud, CloudRain, Activity, Users, Loader2, DollarSign, TrendingUpIcon, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 // Lazy load tab components for better code splitting
 const ClimateTab = lazy(() => import("@/components/tabs/ClimateTab"));
@@ -16,6 +19,26 @@ const TabLoader = () => <div className="flex items-center justify-center py-12">
   </div>;
 const Index = () => {
   const [activeTab, setActiveTab] = useState("climate");
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
   const tabs = [{
     id: "climate",
     label: "Climate",
@@ -50,6 +73,19 @@ const Index = () => {
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <div className="flex-1" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={signOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="p-3 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg">
               <TrendingUp className="h-8 w-8 text-primary-foreground" />

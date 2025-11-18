@@ -3,9 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Calculator, Plus, Trash2 } from "lucide-react";
+import { Calculator, Plus, Trash2, Save, FolderOpen, Download } from "lucide-react";
 import { simpleLinearRegression } from "@/lib/regression";
+import { useModelConfigurations } from "@/hooks/useModelConfigurations";
+import { useToast } from "@/hooks/use-toast";
 
 interface DataPoint {
   year: number;
@@ -23,6 +26,12 @@ const ConsumerPriceIndexTab = () => {
   const [targetYear, setTargetYear] = useState(2024);
   const [prediction, setPrediction] = useState<number | null>(null);
   const [coefficients, setCoefficients] = useState({ a: 0, b: 0 });
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [configName, setConfigName] = useState("");
+
+  const { configurations, saveConfiguration, loadConfiguration, deleteConfiguration } = useModelConfigurations('cpi');
+  const { toast } = useToast();
 
   const addDataPoint = () => {
     const lastYear = Math.max(...data.map(d => d.year));
@@ -45,13 +54,48 @@ const ConsumerPriceIndexTab = () => {
     const x = data.map(d => d.year);
     const y = data.map(d => d.cpi);
 
-    // Use least squares method
     const { a, b } = simpleLinearRegression(x, y);
     setCoefficients({ a, b });
 
-    // Calculate prediction: CPI = a + b * Year
     const predictedCPI = a + b * targetYear;
     setPrediction(predictedCPI);
+  };
+
+  const handleSave = async () => {
+    if (!configName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter a name for this configuration.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await saveConfiguration(
+      configName,
+      { data, targetYear },
+      { prediction, coefficients }
+    );
+
+    setConfigName("");
+    setSaveDialogOpen(false);
+  };
+
+  const handleLoad = (configId: string) => {
+    const config = configurations.find(c => c.id === configId);
+    if (!config) return;
+
+    const { configuration, predictionResult } = loadConfiguration(config);
+    setData(configuration.data);
+    setTargetYear(configuration.targetYear);
+    setPrediction(predictionResult.prediction);
+    setCoefficients(predictionResult.coefficients);
+    setLoadDialogOpen(false);
+
+    toast({
+      title: "Configuration loaded",
+      description: `"${config.name}" has been loaded.`,
+    });
   };
 
   const generateChartData = () => {
@@ -87,6 +131,89 @@ const ConsumerPriceIndexTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex gap-2 mb-4">
+            <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex-1">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Save Configuration</DialogTitle>
+                  <DialogDescription>
+                    Give this configuration a name to save it for later.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <Label htmlFor="config-name">Configuration Name</Label>
+                  <Input
+                    id="config-name"
+                    value={configName}
+                    onChange={(e) => setConfigName(e.target.value)}
+                    placeholder="e.g., 2024 CPI Forecast"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleSave}>Save Configuration</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex-1">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Load
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Load Configuration</DialogTitle>
+                  <DialogDescription>
+                    Select a saved configuration to load.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  {configurations.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No saved configurations yet.
+                    </p>
+                  ) : (
+                    configurations.map((config) => (
+                      <div key={config.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{config.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(config.updated_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleLoad(config.id)}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Load
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteConfiguration(config.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {data.map((point, index) => (
               <div key={index} className="flex gap-2 items-end">
@@ -113,7 +240,7 @@ const ConsumerPriceIndexTab = () => {
                   variant="destructive"
                   size="sm"
                   onClick={() => removeDataPoint(index)}
-                  className="h-9"
+                  className="h-9 w-9 p-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -126,33 +253,33 @@ const ConsumerPriceIndexTab = () => {
             Add Data Point
           </Button>
 
-          <div className="border-t pt-4 space-y-3">
-            <div>
-              <Label>Target Year</Label>
-              <Input
-                type="number"
-                value={targetYear}
-                onChange={(e) => setTargetYear(Number(e.target.value))}
-              />
-            </div>
-
-            <Button onClick={calculatePrediction} className="w-full">
-              Calculate CPI
-            </Button>
-
-            {prediction !== null && (
-              <div className="bg-secondary/20 p-4 rounded-lg space-y-2">
-                <p className="text-sm font-medium">Least Squares Coefficients:</p>
-                <p className="text-xs">a (intercept) = {coefficients.a.toFixed(2)}</p>
-                <p className="text-xs">b (slope) = {coefficients.b.toFixed(4)}</p>
-                <div className="border-t pt-2 mt-2">
-                  <p className="text-sm font-semibold">
-                    Predicted CPI for {targetYear}: {prediction.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            )}
+          <div className="space-y-2 pt-4 border-t">
+            <Label>Target Year for Prediction</Label>
+            <Input
+              type="number"
+              value={targetYear}
+              onChange={(e) => setTargetYear(Number(e.target.value))}
+            />
           </div>
+
+          <Button onClick={calculatePrediction} className="w-full">
+            <Calculator className="h-4 w-4 mr-2" />
+            Calculate Prediction
+          </Button>
+
+          {prediction !== null && (
+            <div className="space-y-2 p-4 bg-accent/20 rounded-lg">
+              <h4 className="font-semibold text-sm">Results</h4>
+              <div className="space-y-1 text-sm">
+                <p>
+                  <span className="text-muted-foreground">Coefficients:</span> a = {coefficients.a.toFixed(2)}, b = {coefficients.b.toFixed(4)}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Predicted CPI ({targetYear}):</span> <span className="font-bold">{prediction.toFixed(2)}</span>
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -160,40 +287,21 @@ const ConsumerPriceIndexTab = () => {
         <CardHeader>
           <CardTitle>CPI Trend Visualization</CardTitle>
           <CardDescription>
-            Historical data and least squares prediction
+            Historical data and linear regression fit
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={generateChartData()}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="year" className="text-xs" />
-              <YAxis className="text-xs" />
-              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="year" />
+              <YAxis />
+              <Tooltip />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="Observed" 
-                stroke="hsl(var(--chart-3))" 
-                strokeWidth={2}
-                dot={{ fill: 'hsl(var(--chart-3))', r: 4 }}
-                connectNulls={false}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="Fitted" 
-                stroke="hsl(var(--chart-1))" 
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
-                connectNulls
-              />
+              <Line type="monotone" dataKey="Observed" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="Fitted" stroke="hsl(var(--accent))" strokeWidth={2} strokeDasharray="5 5" />
             </LineChart>
           </ResponsiveContainer>
-          <div className="mt-4 text-sm text-muted-foreground">
-            <p className="font-medium mb-2">About Least Squares Method:</p>
-            <p>Uses simple linear least squares to fit CPI = a + b·Year, minimizing the sum of squared residuals to find the best-fit line through historical data.</p>
-          </div>
         </CardContent>
       </Card>
     </div>
