@@ -14,7 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      model_configurations: {
+        Row: {
+          configuration: Json
+          created_at: string
+          id: string
+          model_type: Database["public"]["Enums"]["model_type"]
+          name: string
+          prediction_result: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          configuration: Json
+          created_at?: string
+          id?: string
+          model_type: Database["public"]["Enums"]["model_type"]
+          name: string
+          prediction_result?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          configuration?: Json
+          created_at?: string
+          id?: string
+          model_type?: Database["public"]["Enums"]["model_type"]
+          name?: string
+          prediction_result?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_configurations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +87,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      model_type:
+        | "cpi"
+        | "gdp"
+        | "weather"
+        | "disease"
+        | "drug"
+        | "epidemiology"
+        | "agriculture"
+        | "climate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +222,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      model_type: [
+        "cpi",
+        "gdp",
+        "weather",
+        "disease",
+        "drug",
+        "epidemiology",
+        "agriculture",
+        "climate",
+      ],
+    },
   },
 } as const
