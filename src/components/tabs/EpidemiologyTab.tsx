@@ -4,7 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Calculator } from "lucide-react";
+import { Calculator, Save, FolderOpen } from "lucide-react";
+import { useModelConfigurations } from "@/hooks/useModelConfigurations";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const EpidemiologyTab = () => {
   const [initialInfected, setInitialInfected] = useState(100);
@@ -13,6 +22,12 @@ const EpidemiologyTab = () => {
   const [recoveryRate, setRecoveryRate] = useState(0.1);
   const [days, setDays] = useState(90);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [configName, setConfigName] = useState("");
+  
+  const { configurations, loading, saveConfiguration, loadConfiguration, deleteConfiguration } = 
+    useModelConfigurations('epidemiology');
 
   const calculateSIR = () => {
     const dt = 1; // time step in days
@@ -45,6 +60,31 @@ const EpidemiologyTab = () => {
     }
     
     setChartData(data);
+  };
+
+  const handleSave = async () => {
+    if (!configName.trim()) return;
+    
+    const configuration = { initialInfected, populationSize, infectionRate, recoveryRate, days };
+    const predictionResult = { chartData };
+    
+    await saveConfiguration(configName, configuration, predictionResult);
+    setSaveDialogOpen(false);
+    setConfigName("");
+  };
+
+  const handleLoad = (configId: string) => {
+    const config = configurations.find(c => c.id === configId);
+    if (!config) return;
+
+    const { configuration, predictionResult } = loadConfiguration(config);
+    setInitialInfected(configuration.initialInfected);
+    setPopulationSize(configuration.populationSize);
+    setInfectionRate(configuration.infectionRate);
+    setRecoveryRate(configuration.recoveryRate);
+    setDays(configuration.days);
+    setChartData(predictionResult.chartData);
+    setLoadDialogOpen(false);
   };
 
   const r0 = (infectionRate * populationSize) / recoveryRate;
@@ -119,9 +159,17 @@ const EpidemiologyTab = () => {
             />
           </div>
 
-          <Button onClick={calculateSIR} className="w-full">
-            Run Epidemic Simulation
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={calculateSIR} className="flex-1">
+              Run Epidemic Simulation
+            </Button>
+            <Button onClick={() => setSaveDialogOpen(true)} variant="outline" size="icon">
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button onClick={() => setLoadDialogOpen(true)} variant="outline" size="icon">
+              <FolderOpen className="h-4 w-4" />
+            </Button>
+          </div>
 
           <div className="p-4 bg-accent/10 rounded-lg space-y-2">
             <p className="text-sm font-medium">Epidemic Metrics:</p>
@@ -196,6 +244,68 @@ const EpidemiologyTab = () => {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Configuration</DialogTitle>
+            <DialogDescription>
+              Save your current SIR epidemiology model configuration
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Configuration name"
+            value={configName}
+            onChange={(e) => setConfigName(e.target.value)}
+          />
+          <DialogFooter>
+            <Button onClick={handleSave} disabled={!configName.trim()}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Load Configuration</DialogTitle>
+            <DialogDescription>
+              Select a saved configuration to load
+            </DialogDescription>
+          </DialogHeader>
+          {loading ? (
+            <p>Loading...</p>
+          ) : configurations.length === 0 ? (
+            <p className="text-muted-foreground">No saved configurations</p>
+          ) : (
+            <div className="space-y-2">
+              {configurations.map((config) => (
+                <div key={config.id} className="flex items-center justify-between p-3 border rounded">
+                  <div>
+                    <p className="font-medium">{config.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(config.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => handleLoad(config.id)}>
+                      Load
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteConfiguration(config.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
