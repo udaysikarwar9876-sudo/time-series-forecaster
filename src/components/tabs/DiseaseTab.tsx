@@ -4,7 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Calculator, Plus, Trash2 } from "lucide-react";
+import { Calculator, Plus, Trash2, Save, FolderOpen } from "lucide-react";
+import { useModelConfigurations } from "@/hooks/useModelConfigurations";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface DataPoint {
   day: number;
@@ -22,6 +31,12 @@ const DiseaseTab = () => {
   const [predictionDay, setPredictionDay] = useState(25);
   const [prediction, setPrediction] = useState<number | null>(null);
   const [growthRate, setGrowthRate] = useState(0);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [configName, setConfigName] = useState("");
+  
+  const { configurations, loading, saveConfiguration, loadConfiguration, deleteConfiguration } = 
+    useModelConfigurations('disease');
 
   const addDataPoint = () => {
     const lastDay = data[data.length - 1]?.day || 20;
@@ -58,6 +73,29 @@ const DiseaseTab = () => {
     // Calculate prediction
     const predictedVolume = V0 * Math.exp(r * predictionDay);
     setPrediction(predictedVolume);
+  };
+
+  const handleSave = async () => {
+    if (!configName.trim()) return;
+    
+    const configuration = { data, predictionDay };
+    const predictionResult = { prediction, growthRate };
+    
+    await saveConfiguration(configName, configuration, predictionResult);
+    setSaveDialogOpen(false);
+    setConfigName("");
+  };
+
+  const handleLoad = (configId: string) => {
+    const config = configurations.find(c => c.id === configId);
+    if (!config) return;
+
+    const { configuration, predictionResult } = loadConfiguration(config);
+    setData(configuration.data);
+    setPredictionDay(configuration.predictionDay);
+    setPrediction(predictionResult.prediction);
+    setGrowthRate(predictionResult.growthRate);
+    setLoadDialogOpen(false);
   };
 
   const chartData = [
@@ -129,9 +167,17 @@ const DiseaseTab = () => {
             />
           </div>
 
-          <Button onClick={calculateRegression} className="w-full" disabled={data.length < 2}>
-            Calculate Growth Prediction
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={calculateRegression} className="flex-1" disabled={data.length < 2}>
+              Calculate Growth Prediction
+            </Button>
+            <Button onClick={() => setSaveDialogOpen(true)} variant="outline" size="icon">
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button onClick={() => setLoadDialogOpen(true)} variant="outline" size="icon">
+              <FolderOpen className="h-4 w-4" />
+            </Button>
+          </div>
 
           {prediction !== null && (
             <div className="p-4 bg-accent/10 rounded-lg space-y-2">
@@ -197,6 +243,68 @@ const DiseaseTab = () => {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Configuration</DialogTitle>
+            <DialogDescription>
+              Save your current disease progression model configuration
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Configuration name"
+            value={configName}
+            onChange={(e) => setConfigName(e.target.value)}
+          />
+          <DialogFooter>
+            <Button onClick={handleSave} disabled={!configName.trim()}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Load Configuration</DialogTitle>
+            <DialogDescription>
+              Select a saved configuration to load
+            </DialogDescription>
+          </DialogHeader>
+          {loading ? (
+            <p>Loading...</p>
+          ) : configurations.length === 0 ? (
+            <p className="text-muted-foreground">No saved configurations</p>
+          ) : (
+            <div className="space-y-2">
+              {configurations.map((config) => (
+                <div key={config.id} className="flex items-center justify-between p-3 border rounded">
+                  <div>
+                    <p className="font-medium">{config.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(config.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => handleLoad(config.id)}>
+                      Load
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteConfiguration(config.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

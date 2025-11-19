@@ -3,8 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calculator } from "lucide-react";
+import { Calculator, Save, FolderOpen } from "lucide-react";
 import { multipleLinearRegression } from "@/lib/regression";
+import { useModelConfigurations } from "@/hooks/useModelConfigurations";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const WeatherTab = () => {
   const [todayTemp, setTodayTemp] = useState(25);
@@ -12,6 +21,12 @@ const WeatherTab = () => {
   const [pressure, setPressure] = useState(1013);
   const [prediction, setPrediction] = useState<number | null>(null);
   const [coefficients, setCoefficients] = useState<number[]>([2, 0.8, 0.02, -0.01]);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [configName, setConfigName] = useState("");
+  
+  const { configurations, loading, saveConfiguration, loadConfiguration, deleteConfiguration } = 
+    useModelConfigurations('weather');
 
   const calculatePrediction = () => {
     // Sample historical data for training (in real app, this would be actual historical data)
@@ -37,6 +52,30 @@ const WeatherTab = () => {
     // Predict using calculated coefficients
     const result = coef[0] + coef[1] * todayTemp + coef[2] * humidity + coef[3] * pressure;
     setPrediction(result);
+  };
+
+  const handleSave = async () => {
+    if (!configName.trim()) return;
+    
+    const configuration = { todayTemp, humidity, pressure };
+    const predictionResult = { prediction, coefficients };
+    
+    await saveConfiguration(configName, configuration, predictionResult);
+    setSaveDialogOpen(false);
+    setConfigName("");
+  };
+
+  const handleLoad = (configId: string) => {
+    const config = configurations.find(c => c.id === configId);
+    if (!config) return;
+
+    const { configuration, predictionResult } = loadConfiguration(config);
+    setTodayTemp(configuration.todayTemp);
+    setHumidity(configuration.humidity);
+    setPressure(configuration.pressure);
+    setPrediction(predictionResult.prediction);
+    setCoefficients(predictionResult.coefficients);
+    setLoadDialogOpen(false);
   };
 
   return (
@@ -85,9 +124,17 @@ const WeatherTab = () => {
             />
           </div>
 
-          <Button onClick={calculatePrediction} className="w-full">
-            Predict Tomorrow's Temperature
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={calculatePrediction} className="flex-1">
+              Predict Tomorrow's Temperature
+            </Button>
+            <Button onClick={() => setSaveDialogOpen(true)} variant="outline" size="icon">
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button onClick={() => setLoadDialogOpen(true)} variant="outline" size="icon">
+              <FolderOpen className="h-4 w-4" />
+            </Button>
+          </div>
 
           {prediction !== null && (
             <div className="p-4 bg-accent/10 rounded-lg space-y-2">
@@ -138,6 +185,68 @@ const WeatherTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Configuration</DialogTitle>
+            <DialogDescription>
+              Save your current weather model configuration
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Configuration name"
+            value={configName}
+            onChange={(e) => setConfigName(e.target.value)}
+          />
+          <DialogFooter>
+            <Button onClick={handleSave} disabled={!configName.trim()}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Load Configuration</DialogTitle>
+            <DialogDescription>
+              Select a saved configuration to load
+            </DialogDescription>
+          </DialogHeader>
+          {loading ? (
+            <p>Loading...</p>
+          ) : configurations.length === 0 ? (
+            <p className="text-muted-foreground">No saved configurations</p>
+          ) : (
+            <div className="space-y-2">
+              {configurations.map((config) => (
+                <div key={config.id} className="flex items-center justify-between p-3 border rounded">
+                  <div>
+                    <p className="font-medium">{config.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(config.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => handleLoad(config.id)}>
+                      Load
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteConfiguration(config.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
