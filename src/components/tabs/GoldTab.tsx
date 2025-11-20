@@ -16,19 +16,19 @@ import {
 } from "@/components/ui/dialog";
 
 interface DataPoint {
-  day: number;
-  volume: number;
+  month: number;
+  price: number;
 }
 
-const DiseaseTab = () => {
+const GoldTab = () => {
   const [data, setData] = useState<DataPoint[]>([
-    { day: 0, volume: 1.0 },
-    { day: 5, volume: 1.8 },
-    { day: 10, volume: 3.2 },
-    { day: 15, volume: 5.5 },
-    { day: 20, volume: 8.1 },
+    { month: 1, price: 1800 },
+    { month: 2, price: 1850 },
+    { month: 3, price: 1900 },
+    { month: 4, price: 1950 },
+    { month: 5, price: 2000 },
   ]);
-  const [predictionDay, setPredictionDay] = useState(25);
+  const [predictionMonth, setPredictionMonth] = useState(6);
   const [prediction, setPrediction] = useState<number | null>(null);
   const [growthRate, setGrowthRate] = useState(0);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -36,11 +36,11 @@ const DiseaseTab = () => {
   const [configName, setConfigName] = useState("");
   
   const { configurations, loading, saveConfiguration, loadConfiguration, deleteConfiguration } = 
-    useModelConfigurations('disease');
+    useModelConfigurations('gold');
 
   const addDataPoint = () => {
-    const lastDay = data[data.length - 1]?.day || 20;
-    setData([...data, { day: lastDay + 5, volume: 8 }]);
+    const lastMonth = data[data.length - 1]?.month || 5;
+    setData([...data, { month: lastMonth + 1, price: 2000 }]);
   };
 
   const removeDataPoint = (index: number) => {
@@ -56,29 +56,25 @@ const DiseaseTab = () => {
   const calculateRegression = () => {
     if (data.length < 2) return;
 
-    // Exponential regression: V(t) = V0 * e^(r*t)
-    // Taking ln: ln(V) = ln(V0) + r*t
     const n = data.length;
-    const sumT = data.reduce((sum, d) => sum + d.day, 0);
-    const sumLnV = data.reduce((sum, d) => sum + Math.log(d.volume), 0);
-    const sumTLnV = data.reduce((sum, d) => sum + d.day * Math.log(d.volume), 0);
-    const sumT2 = data.reduce((sum, d) => sum + d.day * d.day, 0);
+    const sumX = data.reduce((sum, d) => sum + d.month, 0);
+    const sumY = data.reduce((sum, d) => sum + d.price, 0);
+    const sumXY = data.reduce((sum, d) => sum + d.month * d.price, 0);
+    const sumX2 = data.reduce((sum, d) => sum + d.month * d.month, 0);
 
-    const r = (n * sumTLnV - sumT * sumLnV) / (n * sumT2 - sumT * sumT);
-    const lnV0 = (sumLnV - r * sumT) / n;
-    const V0 = Math.exp(lnV0);
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
 
-    setGrowthRate(r);
+    setGrowthRate(slope);
 
-    // Calculate prediction
-    const predictedVolume = V0 * Math.exp(r * predictionDay);
-    setPrediction(predictedVolume);
+    const predictedPrice = slope * predictionMonth + intercept;
+    setPrediction(predictedPrice);
   };
 
   const handleSave = async () => {
     if (!configName.trim()) return;
     
-    const configuration = { data, predictionDay };
+    const configuration = { data, predictionMonth };
     const predictionResult = { prediction, growthRate };
     
     await saveConfiguration(configName, configuration, predictionResult);
@@ -92,15 +88,15 @@ const DiseaseTab = () => {
 
     const { configuration, predictionResult } = loadConfiguration(config);
     setData(configuration.data);
-    setPredictionDay(configuration.predictionDay);
+    setPredictionMonth(configuration.predictionMonth);
     setPrediction(predictionResult.prediction);
     setGrowthRate(predictionResult.growthRate);
     setLoadDialogOpen(false);
   };
 
   const chartData = [
-    ...data.map(d => ({ day: d.day, actual: d.volume, predicted: null })),
-    ...(prediction ? [{ day: predictionDay, actual: null, predicted: prediction }] : [])
+    ...data.map(d => ({ month: d.month, actual: d.price, predicted: null })),
+    ...(prediction ? [{ month: predictionMonth, actual: null, predicted: prediction }] : [])
   ];
 
   return (
@@ -109,10 +105,10 @@ const DiseaseTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-primary" />
-            Disease Progression Data
+            Gold Price Data
           </CardTitle>
           <CardDescription>
-            Model: V(t) = V₀·e^(r·t)
+            Model: Linear Regression (Price = m·Month + b)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -120,21 +116,21 @@ const DiseaseTab = () => {
             {data.map((point, index) => (
               <div key={index} className="flex gap-2 items-end">
                 <div className="flex-1">
-                  <Label className="text-xs">Day</Label>
+                  <Label className="text-xs">Month</Label>
                   <Input
                     type="number"
-                    value={point.day}
-                    onChange={(e) => updateDataPoint(index, "day", Number(e.target.value))}
+                    value={point.month}
+                    onChange={(e) => updateDataPoint(index, "month", Number(e.target.value))}
                     className="h-9"
                   />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-xs">Volume (cm³)</Label>
+                  <Label className="text-xs">Price ($/oz)</Label>
                   <Input
                     type="number"
-                    step="0.1"
-                    value={point.volume}
-                    onChange={(e) => updateDataPoint(index, "volume", Number(e.target.value))}
+                    step="10"
+                    value={point.price}
+                    onChange={(e) => updateDataPoint(index, "price", Number(e.target.value))}
                     className="h-9"
                   />
                 </div>
@@ -157,19 +153,19 @@ const DiseaseTab = () => {
           </Button>
 
           <div className="pt-4 border-t">
-            <Label htmlFor="prediction-day">Prediction Day</Label>
+            <Label htmlFor="prediction-month">Prediction Month</Label>
             <Input
-              id="prediction-day"
+              id="prediction-month"
               type="number"
-              value={predictionDay}
-              onChange={(e) => setPredictionDay(Number(e.target.value))}
+              value={predictionMonth}
+              onChange={(e) => setPredictionMonth(Number(e.target.value))}
               className="mt-1"
             />
           </div>
 
           <div className="flex gap-2">
             <Button onClick={calculateRegression} className="flex-1" disabled={data.length < 2}>
-              Calculate Growth Prediction
+              Calculate Price Prediction
             </Button>
             <Button onClick={() => setSaveDialogOpen(true)} variant="outline" size="icon">
               <Save className="h-4 w-4" />
@@ -181,13 +177,13 @@ const DiseaseTab = () => {
 
           {prediction !== null && (
             <div className="p-4 bg-accent/10 rounded-lg space-y-2">
-              <p className="text-sm font-medium">Growth Parameters:</p>
+              <p className="text-sm font-medium">Investment Insights:</p>
               <div className="text-xs space-y-1 text-muted-foreground">
-                <p>Growth rate (r) = {growthRate.toFixed(4)} per day</p>
-                <p>{growthRate > 0.1 ? "High aggressiveness" : "Moderate growth"}</p>
+                <p>Monthly growth rate: ${growthRate.toFixed(2)}/month</p>
+                <p>{growthRate > 0 ? "Upward trend" : "Downward trend"}</p>
               </div>
               <p className="text-lg font-bold text-primary mt-3">
-                Predicted Volume (Day {predictionDay}): {prediction.toFixed(2)} cm³
+                Predicted Price (Month {predictionMonth}): ${prediction.toFixed(2)}/oz
               </p>
             </div>
           )}
@@ -196,23 +192,23 @@ const DiseaseTab = () => {
 
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Tumor Growth Curve</CardTitle>
-          <CardDescription>Exponential growth model visualization</CardDescription>
+          <CardTitle>Gold Price Trend</CardTitle>
+          <CardDescription>Investment price analysis</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
-                dataKey="day" 
+                dataKey="month" 
                 stroke="hsl(var(--foreground))"
                 tick={{ fill: "hsl(var(--foreground))" }}
-                label={{ value: 'Days', position: 'insideBottom', offset: -5 }}
+                label={{ value: 'Month', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
                 stroke="hsl(var(--foreground))"
                 tick={{ fill: "hsl(var(--foreground))" }}
-                label={{ value: 'Volume (cm³)', angle: -90, position: 'insideLeft' }}
+                label={{ value: 'Price ($/oz)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -225,10 +221,10 @@ const DiseaseTab = () => {
               <Line 
                 type="monotone" 
                 dataKey="actual" 
-                stroke="hsl(var(--chart-4))" 
+                stroke="hsl(var(--chart-5))" 
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--chart-4))", r: 4 }}
-                name="Measured"
+                dot={{ fill: "hsl(var(--chart-5))", r: 4 }}
+                name="Actual"
               />
               <Line 
                 type="monotone" 
@@ -249,7 +245,7 @@ const DiseaseTab = () => {
           <DialogHeader>
             <DialogTitle>Save Configuration</DialogTitle>
             <DialogDescription>
-              Save your current disease progression model configuration
+              Save your current gold price model configuration
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -309,4 +305,4 @@ const DiseaseTab = () => {
   );
 };
 
-export default DiseaseTab;
+export default GoldTab;

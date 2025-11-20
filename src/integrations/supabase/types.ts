@@ -96,6 +96,8 @@ export type Database = {
         | "epidemiology"
         | "agriculture"
         | "climate"
+        | "gold"
+        | "silver"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -232,6 +234,8 @@ export const Constants = {
         "epidemiology",
         "agriculture",
         "climate",
+        "gold",
+        "silver",
       ],
     },
   },
