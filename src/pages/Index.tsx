@@ -2,14 +2,15 @@ import { useState, lazy, Suspense, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LineChart, TrendingUp, Cloud, CloudRain, Activity, Users, Loader2, DollarSign, TrendingUpIcon, LogOut, LayoutDashboard } from "lucide-react";
+import { LineChart, TrendingUp, Cloud, CloudRain, Users, Loader2, DollarSign, TrendingUpIcon, LogOut, LayoutDashboard, Coins } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 // Lazy load tab components for better code splitting
 const ClimateTab = lazy(() => import("@/components/tabs/ClimateTab"));
 const WeatherTab = lazy(() => import("@/components/tabs/WeatherTab"));
 const ConsumerPriceIndexTab = lazy(() => import("@/components/tabs/ConsumerPriceIndexTab"));
-const DiseaseTab = lazy(() => import("@/components/tabs/DiseaseTab"));
+const GoldTab = lazy(() => import("@/components/tabs/GoldTab"));
+const SilverTab = lazy(() => import("@/components/tabs/SilverTab"));
 const NationalGDPTab = lazy(() => import("@/components/tabs/NationalGDPTab"));
 const EpidemiologyTab = lazy(() => import("@/components/tabs/EpidemiologyTab"));
 
@@ -55,15 +56,20 @@ const Index = () => {
     icon: DollarSign,
     color: "text-chart-3"
   }, {
-    id: "disease",
-    label: "Disease",
-    icon: Activity,
-    color: "text-chart-4"
+    id: "gold",
+    label: "Gold",
+    icon: Coins,
+    color: "text-chart-5"
+  }, {
+    id: "silver",
+    label: "Silver",
+    icon: Coins,
+    color: "text-chart-2"
   }, {
     id: "gdp",
     label: "National GDP",
     icon: TrendingUpIcon,
-    color: "text-chart-5"
+    color: "text-chart-4"
   }, {
     id: "epidemiology",
     label: "Epidemiology",
@@ -136,8 +142,11 @@ const Index = () => {
               <TabsContent value="cpi" className="mt-0">
                 <ConsumerPriceIndexTab />
               </TabsContent>
-              <TabsContent value="disease" className="mt-0">
-                <DiseaseTab />
+              <TabsContent value="gold" className="mt-0">
+                <GoldTab />
+              </TabsContent>
+              <TabsContent value="silver" className="mt-0">
+                <SilverTab />
               </TabsContent>
               <TabsContent value="gdp" className="mt-0">
                 <NationalGDPTab />

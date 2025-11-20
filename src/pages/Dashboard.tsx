@@ -106,6 +106,8 @@ const Dashboard = () => {
       epidemiology: "Epidemiology",
       agriculture: "Agriculture",
       climate: "Climate",
+      gold: "Gold Investment",
+      silver: "Silver Investment",
     };
     return labels[type];
   };
@@ -120,6 +122,8 @@ const Dashboard = () => {
       epidemiology: "bg-orange-500",
       agriculture: "bg-yellow-500",
       climate: "bg-teal-500",
+      gold: "bg-amber-500",
+      silver: "bg-slate-400",
     };
     return colors[type];
   };
