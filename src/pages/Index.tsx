@@ -20,23 +20,22 @@ const TabLoader = () => <div className="flex items-center justify-center py-12">
   </div>;
 const Index = () => {
   const [activeTab, setActiveTab] = useState("climate");
-  const { user, loading, signOut } = useAuth();
+  const {
+    user,
+    loading,
+    signOut
+  } = useAuth();
   const navigate = useNavigate();
-
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (!user) {
     return null;
   }
@@ -83,21 +82,11 @@ const Index = () => {
             <div className="flex-1" />
             <div className="flex-1" />
             <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate("/dashboard")}
-                className="gap-2"
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={signOut}
-                className="gap-2"
-              >
+              <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 Sign Out
               </Button>
@@ -108,7 +97,7 @@ const Index = () => {
               <TrendingUp className="h-8 w-8 text-primary-foreground" />
             </div>
             <div className="text-center">
-              <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text mb-2 lg:text-6xl text-slate-900">
+              <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text mb-2 lg:text-6xl text-primary">
                 FUTURELENS
               </h1>
               <p className="text-sm md:text-base text-muted-foreground font-medium tracking-wide">
